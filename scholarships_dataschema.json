@@ -1,0 +1,41 @@
+
+{
+  "id": null,
+  "scholarship_name": null,
+  "organization": null,
+  "host_country": null,
+  "financials": {
+    "amount": null,
+    "is_fully_funded": false,
+    "coverage_details": null
+  },
+
+  "eligibility": {
+    "degree_level": [],
+    "nationality_restrictions": [],
+    "major_fields": []
+  },
+
+  "requirements": {
+    "essays_required": false,
+    "letters_of_recommendation_required": false,
+    "gpa_requirement": null,
+    "other_requirements": []
+  },
+
+  "dates": {
+    "deadline": null,
+    "is_expired": false
+  },
+
+  "links": {
+    "official_application_url": null,
+    "discovered_from_social_url": null
+  },
+
+  "pipeline_metadata": {
+    "date_discovered": null,
+      "status": "discovered_only",
+      "confidence_score": 0.0
+    }
+}
