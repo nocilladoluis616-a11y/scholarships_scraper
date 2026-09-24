@@ -1,21 +1,48 @@
-Hi, I'm Luis. I'm an aspiring AI engineer, I'm learning as of the moment and here is my first AI engineered program.
-It's a web scraper, specifically designed to scrape scholarship list website. This is a basic level of AI engineering,
-using an LLM to do the work along with the tools such as: crawl4ai, and pydantic. For the LLM, I initially planned to use a locally hosted AI.
-It was a journey of trials, and errors. I started with an ollama model; llama:3.2b, then I switched to qwen2.5:7. At first, I thought that
-locally hosted AI is better in general because there's no token limit, oh boy- I ate those words. My locally hosted AI definitely worked, but 
-it sacrificed speed. Because I have limited storage, I asked Claude about suggestions to make it better. That's when I landed on Groq free tier.
-It was a great opportunity knowing that I can have free tokens, although limited. 
+Scholarship Finder Scraper
 
-Aside from my change of model, let's talk about other things that went wrong with this adventure. If you can see, I have a scholarshipes_data
-schema.json. On my first trial, I used json schema to serve as the basis of what my AI model will scrape from websites. The problem with this is inefficiency for lists, it's not effective for multiple-file. And I learned that I can use pydantic as a replacement, by leveraging the use of list in python. Next, the wrong URL I first started with multiple URLs, the problem is the speed because I originally intended for this to run locally. Then, after trying with a single URL, it 
-returned the results on my terminal. The problems was, it was mostly N/A. If you look at the code on zone 4, the extraction strategy instruction.
-It was reprompted multiple times, from a simple; to refined. Another solution is to double-check the URL, this code raised multiple errors due to wrong URL. The last major problem was the token issue, this is where I stagnated. It's my first time using an external api_key. It was unfamiliar to me, and making the token run took days of frustration. Thanks to Claude, I managed to solve the problem by using load_dotenv(). If your new, I advise you to install the library python-dotenv. There were multiple mistakes on my codes, and I admit that this project wasn't completely hardcoded by yours truly. Again, I'm still learning, and hopefully be better.
+Hi, I'm Luis — an aspiring AI engineer, learning by building. This is my first AI engineering project: a web scraper that reads scholarship listing pages and uses an LLM to turn them into clean, structured data.
 
-List of libraries/ tools:
--pydantic            pip install pydantic
--crawl4ai            pip install crawl4ai
--load_dotenv         pip install python-dotenv
+What it does
 
-I put all my tools in a .venv I call it tools you can do it as well.
-I activate it using source tools/bin/activate
+The scraper visits a scholarship listing page, pulls the page content, and uses an LLM (via crawl4ai) to extract structured scholarship records — name, organization, amount, deadline, and eligibility — validated against a Pydantic schema, then saved to scholarships.json.
 
+Setup:
+
+1. Clone this repo and set up a virtual environment:
+   python3 -m venv tools
+   source tools/bin/activate
+2. Install dependencies:
+   pip install crawl4ai pydantic python-dotenv
+3. Get a free API key from Groq and create a .env file in the project root with:
+   GROQ_API_TOKEN=your_key_here
+4. Run it:
+   python3 scraper.py
+
+Results are saved to scholarships.json.
+
+The debugging journey:
+
+I originally planned to run this fully locally with Ollama, since I liked the idea of no token limits. I started with llama3.2:3b, then switched to qwen2.5:7b for better extraction quality. It worked — but it was painfully slow (10+ minutes on a single page) because my machine has no GPU to accelerate it. Oh boy, I ate those words about "no token limits" being obviously better. I asked Claude for advice and switched to Groq's free tier: a hosted API with generous free tokens and dramatically faster responses, at the cost of a rate limit I had to design around instead.
+
+Other things that went wrong along the way:
+
+- Schema design. I originally used a raw JSON Schema file (scholarships_dataschema.json) to define what the model should extract. It worked for a single record but broke down for lists of items. Switching to Pydantic, with a proper List[ScholarshipSchema] model, fixed this and made validation much cleaner.
+- Wrong target URL. My first scraper pointed at a category/index page that only had navigation links, not actual scholarship listings — so the model correctly extracted "N/A" for everything, because there was nothing else there to find. I had to inspect the actual page structure to find where the real listings lived, one level deeper.
+- Prompt refinement. My extraction instruction (see Zone 4 in scraper.py) went through several rewrites to stop the model from confusing eligibility criteria with the scholarship name — simple instructions weren't enough; explicit field descriptions plus a negative example were what actually fixed it.
+- API keys, for the first time. This was new territory — my first time working with an external API key and a .env file. It took a few rounds of confusion (mixing up a variable name with its value) before I understood that os.getenv("SOME_NAME") looks up a name, not a secret — the actual secret only ever lives in .env. python-dotenv made this manageable once I actually understood it.
+- Rate limiting. Groq's free tier caps at 8,000 tokens per minute, per model. Large pages get split into chunks by crawl4ai, and a few large chunks alone could blow past that. I lowered chunk_token_threshold to keep individual requests smaller, and made sure a rate-limited chunk fails gracefully now instead of crashing the whole run.
+
+I'll be honest: this project wasn't entirely hardcoded solo — I used Claude to help debug a lot of this, especially the API key handling and rate limiting sections. I'm still learning, and documenting that honestly felt more useful than pretending otherwise.
+
+Known limitations:
+- Groq's free tier rate limit means a large page can still occasionally drop a chunk of data on a single run.
+- The scraper only reads one page deep — some sites (like PhilScholar) nest real listing details a level or two further than the page you start on, which this doesn't follow automatically yet.
+- amount and deadline often come back "N/A" on pages where that detail only lives on each scholarship's own dedicated page.
+Tools & libraries:
+- pip install pydantic
+- pip install crawl4ai
+- pip install python-dotenv
+- crawl4ai — web crawling + LLM-based extraction
+- Pydantic — schema validation
+- python-dotenv — loads .env variables
+- Groq — LLM inference API
